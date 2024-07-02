@@ -1,0 +1,173 @@
+<?xml version="1.0"?>
+<CodeGenClass xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+ <Namespace>Library.WebService.Extension</Namespace>
+ <Name>SoapMessageAccessClientExtension</Name>
+ <IsPartialClass>false</IsPartialClass>
+ <BaseTypes>
+   <string>SoapExtension</string>
+   <string>IDisposable</string>
+ </BaseTypes>
+ <Imports>
+   <string>System</string>
+   <string>System.IO</string>
+   <string>System.Text</string>
+   <string>System.Web.Services.Protocols</string>
+ </Imports>
+ <Code>
+<![CDATA[private Stream oldStream;
+private Stream newStream;
+private bool mustStoreSoapMessage;
+
+public override object GetInitializer(LogicalMethodInfo methodInfo, SoapExtensionAttribute attribute)
+{
+	return null;
+}
+
+public override object GetInitializer(Type t)
+{
+	//return typeof(SoapMessageAccessClientExtension);
+	if (t.BaseType == typeof(SoapHttpClientProtocolExtended))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+public override void Initialize(object initializer)
+{
+	mustStoreSoapMessage = (bool)initializer;
+}
+
+public override void ProcessMessage(SoapMessage message)
+{
+	switch (message.Stage)
+	{
+		case SoapMessageStage.BeforeSerialize:
+			break;
+
+		case SoapMessageStage.AfterSerialize:
+			StoreRequestMessage(message);
+			// Pass it off as the actual stream
+			//Copy(newStream, oldStream);
+			// Indicate for the return that we don't wish to chain anything in
+			break;
+
+		case SoapMessageStage.BeforeDeserialize:
+			StoreResponseMessage(message);
+			// Pass it off as the actual stream
+			break;
+
+		case SoapMessageStage.AfterDeserialize:
+			break;
+
+		default:
+			throw new ArgumentException("Invalid message stage [" + message.Stage + "]", "message");
+	}
+}
+
+public override Stream ChainStream(Stream stream)
+{
+	// Store old
+	oldStream = stream;
+	newStream = new MemoryStream();
+
+	// Return new stream
+	return newStream;
+}
+
+private void StoreRequestMessage(SoapMessage message)
+{
+	// Rewind the source stream
+	newStream.Position = 0;
+
+	if (mustStoreSoapMessage)
+	{
+		try
+		{
+			// Store message in our slot in the SoapHttpClientProtocol-derived class
+			byte[] bufEncSoap = new Byte[newStream.Length];
+			newStream.Read(bufEncSoap, 0, bufEncSoap.Length);
+			((SoapHttpClientProtocolExtended)(((SoapClientMessage)message).Client)).SoapRequestInternal = bufEncSoap;
+		}
+		catch (Exception)
+		{
+			//throw new MessageStorageException("An error occured while trying to access the SOAP stream.", ex);
+		}
+	}
+
+	Copy(newStream, oldStream);
+}
+
+private void StoreResponseMessage(SoapMessage message)
+{
+	Stream tempStream = new MemoryStream();
+	Copy(oldStream, tempStream);
+
+	if (mustStoreSoapMessage)
+	{
+		try
+		{
+			// Store message in our slot in the SoapHttpClientProtocol-derived class
+			byte[] bufEncSoap = new Byte[tempStream.Length];
+			tempStream.Read(bufEncSoap, 0, bufEncSoap.Length);
+			((SoapHttpClientProtocolExtended)(((SoapClientMessage)message).Client)).SoapResponseInternal = bufEncSoap;
+		}
+		catch (Exception)
+		{
+			//throw new MessageStorageException("An error occured while trying to access the SOAP stream.", ex);
+		}
+	}
+
+	Copy(tempStream, newStream);
+}
+
+private static void Copy(Stream from, Stream to)
+{
+	if (from.CanSeek == true)
+		from.Position = 0;
+	TextReader reader = new StreamReader(from);
+	TextWriter writer = new StreamWriter(to);
+	writer.WriteLine(reader.ReadToEnd());
+	writer.Flush();
+	if (to.CanSeek == true)
+		to.Position = 0;
+}
+
+public void Dispose()
+{
+	Dispose(true);
+	GC.SuppressFinalize(this);
+}
+
+protected virtual void Dispose(bool disposing)
+{
+	if (disposing)
+	{
+		// Free other state (managed objects)
+	}
+
+	// Free your own state (unmanaged objects)
+	// Set large fields to null
+	if (oldStream != null)
+	{
+		oldStream.Close();
+		oldStream = null;
+	}
+
+	if (newStream != null)
+	{
+		newStream.Close();
+		newStream = null;
+	}
+}
+
+~SoapMessageAccessClientExtension()
+{
+	// Simply call Dispose(false)
+	Dispose(false);
+}]]>
+</Code>
+</CodeGenClass>

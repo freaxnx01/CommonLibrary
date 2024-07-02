@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<CodeGenClass xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+ <Namespace>Library.WebService.Extension</Namespace>
+ <Name>PipelineConfiguration</Name>
+ <IsPartialClass>false</IsPartialClass>
+ <BaseTypes>
+ </BaseTypes>
+ <Imports>
+   <string>System</string>
+   <string>System.Configuration</string>
+   <string>System.Reflection</string>
+   <string>System.Web.Services.Configuration</string>
+   <string>System.Web.Services.Protocols</string>
+   <string>System.Diagnostics</string>
+ </Imports>
+ <Code>
+<![CDATA[private static void InjectExtension(Type extension)
+{
+	try
+	{
+		RegisterSoapExtension(extension, 1, PriorityGroup.High);
+	}
+	catch (Exception ex)
+	{
+		throw new ApplicationException("Problem occured when trying to inject SoapExtension into pipeline", ex);
+	}
+}
+
+public static void InjectExtension()
+{
+    string typeFullName = MethodBase.GetCurrentMethod().DeclaringType.Namespace + ".SoapMessageAccessClientExtension";
+    Type t = Assembly.GetExecutingAssembly().GetType(typeFullName);
+    InjectExtension(t);
+}
+
+private static void RegisterSoapExtension(Type type, int priority, PriorityGroup group)
+{
+	if (!type.IsSubclassOf(typeof(SoapExtension)))
+	{
+		throw new ArgumentException("Type must be derived from SoapException.", "type");
+	}
+
+	if (priority < 1)
+	{
+		throw new ArgumentOutOfRangeException("priority", priority, "Priority must be greater or equal to 1.");
+	}
+
+	WebServicesSection wss = WebServicesSection.Current;
+
+	FieldInfo readOnlyField = typeof(System.Configuration.ConfigurationElementCollection).GetField("bReadOnly", BindingFlags.NonPublic | BindingFlags.Instance);
+	readOnlyField.SetValue(wss.SoapExtensionTypes, false);
+  SoapExtensionTypeElement te = new SoapExtensionTypeElement(type, priority, group);
+  wss.SoapExtensionTypes.Add(te);
+	MethodInfo resetModifiedMethod = typeof(System.Configuration.ConfigurationElement).GetMethod("ResetModified", BindingFlags.NonPublic | BindingFlags.Instance);
+	resetModifiedMethod.Invoke(wss.SoapExtensionTypes, null);
+	MethodInfo setReadOnlyMethod = typeof(System.Configuration.ConfigurationElement).GetMethod("SetReadOnly", BindingFlags.NonPublic | BindingFlags.Instance);
+	setReadOnlyMethod.Invoke(wss.SoapExtensionTypes, null);
+}]]>
+</Code>
+</CodeGenClass>

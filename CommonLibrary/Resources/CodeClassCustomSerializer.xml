@@ -1,0 +1,37 @@
+﻿<?xml version="1.0"?>
+<CodeGenClass xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Namespace>Library.WebService.Extension</Namespace>
+  <Name>CustomSerializer</Name>
+  <IsPartialClass>false</IsPartialClass>
+  <IsStatic>true</IsStatic>
+  <BaseTypes>
+  </BaseTypes>
+  <Imports>
+    <string>System</string>
+    <string>System.Reflection</string>
+    <string>System.Runtime.Serialization</string>
+    <string>System.Security.Permissions</string>
+  </Imports>
+  <Code>
+    <![CDATA[public static void Construct(object obj, SerializationInfo info, StreamingContext context)
+{
+  foreach (PropertyInfo propInfo in obj.GetType().GetProperties())
+  {
+    try
+    {
+      object value = info.GetValue(propInfo.Name, propInfo.PropertyType);
+      propInfo.SetValue(obj, value, null);
+    }
+    catch {}
+  }
+}
+
+public static void GetObjectData(object obj, SerializationInfo info, StreamingContext context)
+{
+foreach (PropertyInfo propInfo in obj.GetType().GetProperties())
+{
+info.AddValue(propInfo.Name, propInfo.GetValue(obj, null));
+}
+}]]>
+  </Code>
+</CodeGenClass>

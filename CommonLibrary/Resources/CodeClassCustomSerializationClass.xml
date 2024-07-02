@@ -1,0 +1,28 @@
+﻿<?xml version="1.0"?>
+<CodeGenClass xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Namespace>Library.WebService.Extension</Namespace>
+  <Name>x</Name>
+  <IsPartialClass>true</IsPartialClass>
+  <BaseTypes>
+    <string>ISerializable</string>
+  </BaseTypes>
+  <Imports>
+    <string>System</string>
+    <string>System.Runtime.Serialization</string>
+    <string>System.Security.Permissions</string>
+  </Imports>
+  <Code>
+    <![CDATA[public %classname%() {}
+
+protected %classname%(SerializationInfo info, StreamingContext context)
+{
+    CustomSerializer.Construct(this, info, context);
+}
+
+[SecurityPermissionAttribute(SecurityAction.Demand, SerializationFormatter = true)]
+public void GetObjectData(SerializationInfo info, StreamingContext context)
+{
+    CustomSerializer.GetObjectData(this, info, context);
+}]]>
+  </Code>
+</CodeGenClass>

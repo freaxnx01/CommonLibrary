@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<CodeGenClass xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+ <Namespace>Library.WebService.Extension</Namespace>
+ <Name>SoapHttpClientProtocolExtended</Name>
+ <IsPartialClass>false</IsPartialClass>
+ <BaseTypes>
+   <string>SoapHttpClientProtocol</string>
+ </BaseTypes>
+ <Imports>
+   <string>System</string>
+   <string>System.Text</string>
+   <string>System.Web.Services.Protocols</string>
+ </Imports>
+ <Code>
+<![CDATA[private byte[] _soapRequestMsg;
+private byte[] _soapResponseMsg;
+
+public SoapHttpClientProtocolExtended() {}
+
+internal byte[] SoapRequestInternal
+{
+	set { _soapRequestMsg = value; }
+}
+internal byte[] SoapResponseInternal
+{
+	set { _soapResponseMsg = value; }
+}
+
+public byte[] SoapRequest
+{
+	get { return _soapRequestMsg; }
+}
+
+public byte[] SoapResponse
+{
+	get { return _soapResponseMsg; }
+}
+
+public string SoapRequestString
+{
+    get
+    {
+        byte[] result = _soapRequestMsg;
+        if (result != null)
+        {
+            UTF8Encoding enc = new UTF8Encoding();
+            return enc.GetString(result);
+        }
+        return string.Empty;
+    }
+}
+
+public string SoapResponseString
+{
+    get
+    {
+        byte[] result = _soapResponseMsg;
+        if (result != null)
+        {
+            UTF8Encoding enc = new UTF8Encoding();
+            return enc.GetString(result);
+        }
+        return string.Empty;
+    }
+}]]>
+</Code>
+</CodeGenClass>
